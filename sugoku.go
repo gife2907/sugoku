@@ -4,6 +4,7 @@ package main
 	=== to do ===
 
 	github
+	byte to int8
 	launch.js and popup
 	dble click on message opens editor
 	ut
@@ -22,7 +23,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 )
 
 func getWinning() [9][9]int8 {
@@ -60,35 +60,57 @@ func getWinning() [9][9]int8 {
 	gs = append(gs, "891034500")
 	gs = append(gs, "910305678")
 
-	var a [9][9]int8
-	var line []int8
-	var b int8
+	return strToGrid(gs)
+}
 
-	for i := range gs {
-		bytes := []byte(gs[i])
+func strToGrid(s []string) [9][9]int8 {
 
-		//line = []int8(bline)
+	var res [9][9]int8
+	var i8 int8
+
+	for i := range s {
+		bytes := []byte(s[i])
 		for j := range bytes {
-			b = bytes[j]
-			if b == 32 {
-				a[i][j] = 0
+			i8 = int8(bytes[j])
+			if i8 == 32 {
+				res[i][j] = 0
 			} else {
-				a[i][j] = b - 32 - 16
+				res[i][j] = i8 - 32 - 16
 			}
 		}
 	}
 
-	return a
+	return res
 }
 
 func prn(s [9][9]int8) {
 	for i := 0; i < 9; i++ {
 		for j := 0; j < 9; j++ {
-			fmt.Println(" ", s[i][j])
+			if s[i][j] != 0 {
+				fmt.Print(" ", s[i][j])
+			} else {
+				fmt.Print(" .")
+			}
 		}
 		fmt.Println()
 	}
 	fmt.Println()
+}
+
+func getLaurence() [9][9]int8 {
+
+	var gs []string
+	gs = append(gs, "8  4  91 ")
+	gs = append(gs, "  3      ")
+	gs = append(gs, "     3  4")
+	gs = append(gs, "     1 4 ")
+	gs = append(gs, " 58   7  ")
+	gs = append(gs, " 7   68  ")
+	gs = append(gs, "     2   ")
+	gs = append(gs, "      16 ")
+	gs = append(gs, "91  6 5  ")
+
+	return strToGrid(gs)
 }
 
 func getSudo00() [9][9]int8 {
@@ -104,23 +126,7 @@ func getSudo00() [9][9]int8 {
 	gs = append(gs, "   419  5")
 	gs = append(gs, "    8  79")
 
-	var a [9][9]int8
-	var line []int8
-	var b int8
-
-	for i := range gs {
-		line = []int8(gs[i])
-		for j := range line {
-			b = line[j]
-			if b == 32 {
-				a[i][j] = 0
-			} else {
-				a[i][j] = b - 32 - 16
-			}
-		}
-	}
-
-	return a
+	return strToGrid(gs)
 }
 
 func proofLine(l [9]int8) bool {
@@ -189,26 +195,31 @@ func nextOkValue(s [9][9]int8, i int, j int) int8 {
 }
 
 func listOkValues(s [9][9]int8, i int, j int) []int8 {
+
 	res := make([]int8, 0)
-	var nextVal int8 = 1
-	for nextVal < 10 {
-		for v := 0; v < 9; v++ {
-			if s[i][v] == nextVal {
-				nextVal++
-				v = 0
-				continue
+	if s[i][j] != 0 {
+		fmt.Println("There should not be any value here")
+	} else {
+		var nextVal int8 = 1
+		for nextVal < 10 {
+			for v := 0; v < 9; v++ {
+				if s[i][v] == nextVal {
+					nextVal++
+					v = -1
+					continue
+				}
+				if s[v][j] == nextVal {
+					nextVal++
+					v = -1
+					continue
+				}
 			}
-			if s[v][j] == nextVal {
+			if nextVal != 10 {
+				res = append(res, nextVal)
 				nextVal++
-				v = 0
-				continue
+			} else {
+				break
 			}
-		}
-		if nextVal != 10 {
-			res = append(res, nextVal)
-			nextVal++
-		} else {
-			break
 		}
 	}
 	return res
@@ -226,53 +237,7 @@ func nextZero(s [9][9]int8, i int, j int) (int, int, bool) {
 	return -1, -1, false
 }
 
-/*
-func nextSudo(s int8 [9][9], location int, iterateThisLocation bool ) int8 [9][9] {
-
-}
-
-func nextSudo() func int8[9][9] {
-	s := start
-	location := 0
-	iterateThisLocation := false
-
-	return func() int8[9][9] {
-
-		for {
-			u, v := divmod( location, 9 )
-			if iterateThisLocation {
-				nextVal := s[u][v]+1
-				for nextVal <= 10 {
-					for i :=0; i<9; i++ {
-						if ( s[u][i] == nextVal || s[i][v] == nextVal ) {
-							nextVal++
-						}
-					}
-				}
-			}
-			if nextVal == 10 {
-				location++
-			} else {
-				s[u][v] = nextVal
-				return s
-			}
-		}
-	}
-}
-
-*/
-
 func solve(s [9][9]int8, i int, j int) ([9][9]int8, bool) {
-
-	if rand.Intn(5000000) == 10 {
-		prn(s)
-	}
-
-	// Do we have the winning grid ?
-	if winningSudo(s) {
-		fmt.Println("Winner found up")
-		return s, true
-	}
 
 	// If not we are in i, j and there is a 0, so let's try with the next available option
 	if s[i][j] == 0 {
@@ -293,7 +258,6 @@ func solve(s [9][9]int8, i int, j int) ([9][9]int8, bool) {
 			} else {
 				// There is no more zeros so we need to fail ????
 				if winningSudo(s2) {
-					fmt.Println("Winner found down")
 					return s2, true
 				} else {
 					return s2, false
@@ -307,11 +271,12 @@ func solve(s [9][9]int8, i int, j int) ([9][9]int8, bool) {
 
 func main() {
 
+	start := getLaurence()
 	//start := getSudo00()
-	start := getWinning()
+	//start := getWinning()
 
-	fmt.Println(start)
-	fmt.Println(nextZero(start, 0, 0))
+	prn(start)
+	fmt.Println()
 
 	startx, starty, hasZeros := nextZero(start, 0, 0)
 	if hasZeros {
