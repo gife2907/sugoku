@@ -1,26 +1,36 @@
 package main
 
 /*
+	=== infos ===
+
+	Gilles Ferrero
+	https://github.com/gife2907/sugoku
+
 	=== to do ===
 
+	v	solves a real grid
 	v	github
-	v	byte to int8
-	v	some more samples
+	v	byte to int8 conv
+	v	some more test samples
 	v	time measurement
-	gopath issues
-	launch.js and popup
-	dble click on message opens editor
+
+	x	gopath issues
+	x	launch.js and popup
+	x	dble click on message opens editor
+	x	package
+
 	ut
-	package
-	speed optimization
-	more go like w code review
+	resolution speed and memory optimization
+	more go like code w code review
 	more samples with failing cases
 	log appropriately
 	api
 	service
-	vr
-	ar
-	online Pi service
+
+	vr read
+	ar vid overlay
+
+	as an online Pi service
 
 */
 
@@ -28,124 +38,6 @@ import (
 	"fmt"
 	"time"
 )
-
-func getGrid00() [9][9]int8 {
-
-	var gs []string
-	gs = append(gs, "53  7    ")
-	gs = append(gs, "6  195   ")
-	gs = append(gs, " 98    6 ")
-	gs = append(gs, "8   6   3")
-	gs = append(gs, "4  8 3  1")
-	gs = append(gs, "7   2   6")
-	gs = append(gs, " 6    28 ")
-	gs = append(gs, "   419  5")
-	gs = append(gs, "    8  79")
-	return strToGrid(gs)
-}
-
-func getGrid01() [9][9]int8 {
-
-	var gs []string
-	gs = append(gs, "8  4  91 ")
-	gs = append(gs, "  3      ")
-	gs = append(gs, "     3  4")
-	gs = append(gs, "     1 4 ")
-	gs = append(gs, " 58   7  ")
-	gs = append(gs, " 7   68  ")
-	gs = append(gs, "     2   ")
-	gs = append(gs, "      16 ")
-	gs = append(gs, "91  6 5  ")
-	return strToGrid(gs)
-}
-
-func getGrid99() [9][9]int8 {
-
-	// a grid designed against brute forcing
-	// https://en.wikipedia.org/wiki/Sudoku_solving_algorithms
-	// note: it takes 75ms to solve instead of 1 or 2ms
-	// it would deserve an optimization algorithm some day to resolve to 1 or 2 ms as well
-	// optimisation factor could be to divide time by 40 to 70
-	var gs []string
-	gs = append(gs, "         ")
-	gs = append(gs, "     3 85")
-	gs = append(gs, "  1 2    ")
-	gs = append(gs, "   5 7   ")
-	gs = append(gs, "  4   1  ")
-	gs = append(gs, " 9       ")
-	gs = append(gs, "5      73")
-	gs = append(gs, "  2 1    ")
-	gs = append(gs, "    4   9")
-	return strToGrid(gs)
-}
-
-func getGridFullAndValid() [9][9]int8 {
-
-	// This grid is full and valid
-	var gs []string
-	gs = append(gs, "123456789")
-	gs = append(gs, "234567891")
-	gs = append(gs, "345678912")
-	gs = append(gs, "456789123")
-	gs = append(gs, "567891234")
-	gs = append(gs, "678912345")
-	gs = append(gs, "789123456")
-	gs = append(gs, "891234567")
-	gs = append(gs, "912345678")
-	return strToGrid(gs)
-}
-
-func getGridManyHoles() [9][9]int8 {
-
-	// This grid has many holes and is based on the Full Valid grid
-	var gs []string
-	gs = append(gs, "         ")
-	gs = append(gs, "         ")
-	gs = append(gs, "345678912")
-	gs = append(gs, "         ")
-	gs = append(gs, "         ")
-	gs = append(gs, "678912345")
-	gs = append(gs, "         ")
-	gs = append(gs, "891 345  ")
-	gs = append(gs, "91 3 5678")
-	return strToGrid(gs)
-}
-
-func getGridSimple() [9][9]int8 {
-
-	// This grid has only a few holes and is based on the Full Valid grid
-	var gs []string
-	gs = append(gs, "123456789")
-	gs = append(gs, "23  67891")
-	gs = append(gs, "345678912")
-	gs = append(gs, "4567 9 23")
-	gs = append(gs, "567891234")
-	gs = append(gs, "678912345")
-	gs = append(gs, "789123456")
-	gs = append(gs, "891 345  ")
-	gs = append(gs, "91 3 5678")
-	return strToGrid(gs)
-}
-
-func strToGrid(s []string) [9][9]int8 {
-
-	var res [9][9]int8
-	var i8 int8
-
-	for i := range s {
-		bytes := []byte(s[i])
-		for j := range bytes {
-			i8 = int8(bytes[j])
-			if i8 == 32 {
-				res[i][j] = 0
-			} else {
-				res[i][j] = i8 - 32 - 16
-			}
-		}
-	}
-
-	return res
-}
 
 func prn(s [9][9]int8) {
 	for i := 0; i < 9; i++ {
@@ -162,53 +54,32 @@ func prn(s [9][9]int8) {
 }
 
 func isValidSolution(s [9][9]int8) bool {
-	var sl, sc int8
+
+	// checks if s is a valid, fully filled sudoku grid
+
+	var lineSum, colSum int8
 	for i := 0; i < 9; i++ {
 		for j := 0; j < 9; j++ {
 			if s[i][j] == 0 {
 				return false
 			} else {
-				sl += s[i][j]
-				sc += s[j][i]
+				lineSum += s[i][j]
+				colSum += s[j][i]
 			}
 		}
-		if sl != 45 || sc != 45 {
+		if lineSum != 45 || colSum != 45 {
 			return false
 		} else {
-			sl = 0
-			sc = 0
+			lineSum = 0
+			colSum = 0
 		}
 	}
 	return true
 }
 
-func nextAcceptableValue(s [9][9]int8, i int, j int) int8 {
-	var nextVal int8 = 1
-	for nextVal < 10 {
-		for v := 0; v < 9; v++ {
-			if s[i][v] == nextVal {
-				fmt.Println("found ", nextVal, " in line ", i)
-				// if a line or a column already has a value for nextVal, we move to try next one
-				nextVal++
-				v = 0
-				continue
-			}
-			if s[v][j] == nextVal {
-				fmt.Println("found ", nextVal, " in column ", j)
-				// if a line or a column already has a value for nextVal, we move to try next one
-				nextVal++
-				v = 0
-				continue
-			}
-		}
-		if nextVal != 10 {
-			break
-		}
-	}
-	return nextVal
-}
-
 func listAcceptableValues(s [9][9]int8, i int, j int) []int8 {
+
+	// An acceptable value in i,j is a value absent in column i and line j
 
 	res := make([]int8, 0)
 	if s[i][j] != 0 {
@@ -217,13 +88,17 @@ func listAcceptableValues(s [9][9]int8, i int, j int) []int8 {
 		var nextVal int8 = 1
 		for nextVal < 10 {
 			for v := 0; v < 9; v++ {
+				// inspect presence in line
 				if s[i][v] == nextVal {
 					nextVal++
+					// -1 below instead of 0, so that 'continue' then v++ will restart on 0, quite unelegant ...
 					v = -1
 					continue
 				}
+				// inspect presence in line
 				if s[v][j] == nextVal {
 					nextVal++
+					// -1 below instead of 0, so that 'continue' then v++ will restart on 0, quite unelegant ...
 					v = -1
 					continue
 				}
@@ -240,6 +115,10 @@ func listAcceptableValues(s [9][9]int8, i int, j int) []int8 {
 }
 
 func nextEmptyLocation(s [9][9]int8, i int, j int) (int, int, bool) {
+
+	// returns the next i,j location if any, where there is no value yet (0 is no value yet)
+	// the meaning of next is 'next by reading order' and is deterministic as needed
+
 	for u := i; u < 9; u++ {
 		for v := j; v < 9; v++ {
 			if s[u][v] == 0 {
@@ -283,7 +162,7 @@ func solve(s [9][9]int8, i int, j int) ([9][9]int8, bool) {
 				// ... and we calculate the solution with the new grid and the next 0 location ...
 				attempt, status := solve(s2, u, v)
 				if status {
-					// ... and if it is the solution then we return this solution ...
+					// ... and if it is a solution then we return this solution ...
 					return attempt, status
 				} else {
 					// ... otherwise we continue to the next acceptable value in the list
