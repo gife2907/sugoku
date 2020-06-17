@@ -1,6 +1,6 @@
 package sugoutils
 
-func getGrid00() [9][9]int8 {
+func Grid00() [9][9]int8 {
 
 	var gs []string
 	gs = append(gs, "53  7    ")
@@ -15,7 +15,7 @@ func getGrid00() [9][9]int8 {
 	return stringToGrid(gs)
 }
 
-func getGrid01() [9][9]int8 {
+func Grid01() [9][9]int8 {
 
 	var gs []string
 	gs = append(gs, "8  4  91 ")
@@ -30,7 +30,7 @@ func getGrid01() [9][9]int8 {
 	return stringToGrid(gs)
 }
 
-func getGrid99() [9][9]int8 {
+func Grid99() [9][9]int8 {
 
 	// a grid designed against brute forcing
 	// https://en.wikipedia.org/wiki/Sudoku_solving_algorithms
@@ -50,7 +50,7 @@ func getGrid99() [9][9]int8 {
 	return stringToGrid(gs)
 }
 
-func getGridFullAndValid() [9][9]int8 {
+func GridFullAndValid() [9][9]int8 {
 
 	// This grid is full and valid
 	var gs []string
@@ -66,7 +66,7 @@ func getGridFullAndValid() [9][9]int8 {
 	return stringToGrid(gs)
 }
 
-func getGridManyHoles() [9][9]int8 {
+func GridManyHoles() [9][9]int8 {
 
 	// This grid has many holes and is based on the Full Valid grid
 	var gs []string
@@ -82,7 +82,7 @@ func getGridManyHoles() [9][9]int8 {
 	return stringToGrid(gs)
 }
 
-func getGridSimple() [9][9]int8 {
+func GridFewHoles() [9][9]int8 {
 
 	// This grid has only a few holes and is based on the Full Valid grid
 	var gs []string

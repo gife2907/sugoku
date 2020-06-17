@@ -17,7 +17,7 @@ package main
 	x	gopath issues
 	x	launch.js and popup
 	x	dble click on message opens editor
-	x	package
+	x	package : go help gopath, https://www.golang-book.com/books/intro/11
 
 	ut
 	resolution speed and memory optimization
@@ -36,6 +36,7 @@ package main
 
 import (
 	"fmt"
+	"sugoutils"
 	"time"
 )
 
@@ -184,7 +185,7 @@ func solve(s [9][9]int8, i int, j int) ([9][9]int8, bool) {
 
 func main() {
 
-	start := getGrid01()
+	start := sugoutils.Grid01()
 
 	prn(start)
 	fmt.Println()
