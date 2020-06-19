@@ -1,112 +1,39 @@
 package sugoutils
 
-func Grid00() [9][9]int8 {
+import (
+	"fmt"
+	"sort"
+)
 
-	var gs []string
-	gs = append(gs, "53  7    ")
-	gs = append(gs, "6  195   ")
-	gs = append(gs, " 98    6 ")
-	gs = append(gs, "8   6   3")
-	gs = append(gs, "4  8 3  1")
-	gs = append(gs, "7   2   6")
-	gs = append(gs, " 6    28 ")
-	gs = append(gs, "   419  5")
-	gs = append(gs, "    8  79")
-	return stringToGrid(gs)
+var Calls int32
+
+type Location struct {
+	I        uint8
+	J        uint8
+	ValCount uint8
 }
 
-func Grid01() [9][9]int8 {
+type byMostValues []Location
 
-	var gs []string
-	gs = append(gs, "8  4  91 ")
-	gs = append(gs, "  3      ")
-	gs = append(gs, "     3  4")
-	gs = append(gs, "     1 4 ")
-	gs = append(gs, " 58   7  ")
-	gs = append(gs, " 7   68  ")
-	gs = append(gs, "     2   ")
-	gs = append(gs, "      16 ")
-	gs = append(gs, "91  6 5  ")
-	return stringToGrid(gs)
+func (s byMostValues) Len() int {
+	return len(s)
+}
+func (s byMostValues) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s byMostValues) Less(i, j int) bool {
+	return s[i].ValCount > s[j].ValCount
 }
 
-func Grid99() [9][9]int8 {
+func StringToGrid(s []string) [9][9]uint8 {
 
-	// a grid designed against brute forcing
-	// https://en.wikipedia.org/wiki/Sudoku_solving_algorithms
-	// note: it takes 75ms to solve instead of 1 or 2ms
-	// it would deserve an optimization algorithm some day to resolve to 1 or 2 ms as well
-	// optimisation factor could be to divide time by 40 to 70
-	var gs []string
-	gs = append(gs, "         ")
-	gs = append(gs, "     3 85")
-	gs = append(gs, "  1 2    ")
-	gs = append(gs, "   5 7   ")
-	gs = append(gs, "  4   1  ")
-	gs = append(gs, " 9       ")
-	gs = append(gs, "5      73")
-	gs = append(gs, "  2 1    ")
-	gs = append(gs, "    4   9")
-	return stringToGrid(gs)
-}
-
-func GridFullAndValid() [9][9]int8 {
-
-	// This grid is full and valid
-	var gs []string
-	gs = append(gs, "123456789")
-	gs = append(gs, "234567891")
-	gs = append(gs, "345678912")
-	gs = append(gs, "456789123")
-	gs = append(gs, "567891234")
-	gs = append(gs, "678912345")
-	gs = append(gs, "789123456")
-	gs = append(gs, "891234567")
-	gs = append(gs, "912345678")
-	return stringToGrid(gs)
-}
-
-func GridManyHoles() [9][9]int8 {
-
-	// This grid has many holes and is based on the Full Valid grid
-	var gs []string
-	gs = append(gs, "         ")
-	gs = append(gs, "         ")
-	gs = append(gs, "345678912")
-	gs = append(gs, "         ")
-	gs = append(gs, "         ")
-	gs = append(gs, "678912345")
-	gs = append(gs, "         ")
-	gs = append(gs, "891 345  ")
-	gs = append(gs, "91 3 5678")
-	return stringToGrid(gs)
-}
-
-func GridFewHoles() [9][9]int8 {
-
-	// This grid has only a few holes and is based on the Full Valid grid
-	var gs []string
-	gs = append(gs, "123456789")
-	gs = append(gs, "23  67891")
-	gs = append(gs, "345678912")
-	gs = append(gs, "4567 9 23")
-	gs = append(gs, "567891234")
-	gs = append(gs, "678912345")
-	gs = append(gs, "789123456")
-	gs = append(gs, "891 345  ")
-	gs = append(gs, "91 3 5678")
-	return stringToGrid(gs)
-}
-
-func stringToGrid(s []string) [9][9]int8 {
-
-	var res [9][9]int8
-	var i8 int8
+	var res [9][9]uint8
+	var i8 uint8
 
 	for i := range s {
 		bytes := []byte(s[i])
 		for j := range bytes {
-			i8 = int8(bytes[j])
+			i8 = uint8(bytes[j])
 			if i8 == 32 {
 				res[i][j] = 0
 			} else {
@@ -115,4 +42,194 @@ func stringToGrid(s []string) [9][9]int8 {
 		}
 	}
 	return res
+}
+
+func GridToString(s [9][9]uint8) string {
+
+	res := ""
+	for i := 0; i < 9; i++ {
+		for j := 0; j < 9; j++ {
+			if s[i][j] != 0 {
+				res = res + " " + string(byte(48+s[i][j]))
+			} else {
+				res = res + " ."
+			}
+		}
+		if i < 8 {
+			res = res + "\n"
+		}
+	}
+	return res
+}
+
+func locInit(s [9][9]uint8) []Location {
+	var locs []Location
+	var lineCount [9]uint8
+	var colCount [9]uint8
+	var curVal uint8
+	var cellCount uint8
+
+	for i := 0; i < 9; i++ {
+		for j := 0; j < 9; j++ {
+			curVal = s[i][j]
+			if curVal != 0 {
+				lineCount[i]++
+				colCount[j]++
+			}
+		}
+	}
+
+	for i := 0; i < 9; i++ {
+		for j := 0; j < 9; j++ {
+			curVal = s[i][j]
+			if curVal == 0 {
+				cellCount = lineCount[i] + colCount[j]
+				locs = append(locs, Location{uint8(i), uint8(j), cellCount})
+			}
+		}
+	}
+
+	sort.Sort(byMostValues(locs))
+	return locs
+}
+
+func OptimEmptyLocations(s [9][9]uint8) []Location {
+
+	// Prepare the Deterministic Location List (where there are zeros)
+	// Going through this list in deterministic order is a mandatory aspect of backtracking
+	// This is because once a branch has failed, you need to tray with the next value and
+	// and the same Location order to try with new values
+	// In the standard version of backtracking the deterministic order is the reading order
+
+	return locInit(s)
+
+}
+
+func ReadEmptyLocation(s [9][9]uint8) []Location {
+
+	// returns the list of i,j location if any, where there is no value yet (0 is no value yet)
+	// the meaning of next is 'next by reading order' and is deterministic as needed
+
+	var locs []Location
+
+	for u := 0; u < 9; u++ {
+		for v := 0; v < 9; v++ {
+			if s[u][v] == 0 {
+				locs = append(locs, Location{uint8(u), uint8(v), 0})
+			}
+		}
+	}
+	return locs
+}
+
+func IsValidSolution(s [9][9]uint8) bool {
+
+	// checks if s is a valid, fully filled sudoku grid
+
+	var lineSum, colSum uint8
+	for i := 0; i < 9; i++ {
+		for j := 0; j < 9; j++ {
+			if s[i][j] == 0 {
+				return false
+			} else {
+				lineSum += s[i][j]
+				colSum += s[j][i]
+			}
+		}
+		if lineSum != 45 || colSum != 45 {
+			return false
+		} else {
+			lineSum = 0
+			colSum = 0
+		}
+	}
+	return true
+}
+
+func listAcceptableValues(s [9][9]uint8, i uint8, j uint8) []uint8 {
+
+	// An acceptable value in i,j is a value absent in column i and line j
+
+	res := make([]uint8, 0)
+	if s[i][j] != 0 {
+		fmt.Println("There should not be any value here")
+	} else {
+		var nextVal uint8 = 1
+		for nextVal < 10 {
+			for v := 0; v < 9; v++ {
+				// inspect presence in line
+				if s[i][v] == nextVal {
+					nextVal++
+					// -1 below instead of 0, so that 'continue' then v++ will restart on 0, quite unelegant ...
+					v = -1
+					continue
+				}
+				// inspect presence in line
+				if s[v][j] == nextVal {
+					nextVal++
+					// -1 below instead of 0, so that 'continue' then v++ will restart on 0, quite unelegant ...
+					v = -1
+					continue
+				}
+			}
+			if nextVal != 10 {
+				res = append(res, nextVal)
+				nextVal++
+			} else {
+				break
+			}
+		}
+	}
+	return res
+}
+
+func SolveGrid(s [9][9]uint8) ([9][9]uint8, bool) {
+
+	return Solve(s, OptimEmptyLocations(s))
+}
+
+func Solve(s [9][9]uint8, locs []Location) ([9][9]uint8, bool) {
+
+	// This is a classic backtracking algorithm (algoritme des flots en Francais)
+
+	var u, v uint8
+	u = locs[0].I
+	v = locs[0].J
+
+	// This function is to be called on an available 0 location
+	if s[u][v] == 0 {
+
+		Calls++
+
+		// If on a 0 let's list acceptable values
+		options := listAcceptableValues(s, u, v)
+
+		for _, option := range options {
+
+			// for each acceptable value we create a new grid with the value ...
+			s2 := s
+			s2[u][v] = option
+
+			// ... and for this grid we find the next 0 ...
+			if len(locs) != 1 {
+				// ... and we calculate the solution with the new grid and the next 0 location ...
+				attempt, status := Solve(s2, locs[1:])
+				if status {
+					// ... and if it is a solution then we return this solution ...
+					return attempt, status
+				} else {
+					// ... otherwise we continue to the next acceptable value in the list
+					continue
+				}
+			} else {
+				// There is no more zeros so we need to test the situation
+				if IsValidSolution(s2) {
+					return s2, true
+				} else {
+					return s2, false
+				}
+			}
+		}
+	}
+	return s, false
 }
